@@ -9,13 +9,27 @@
     - [@Bean vs @Component](#bean-vs-component)
     - [Scope (Ámbito)](#scope-de-un-bean)
     - [Las anotaciones @RestController, @Service y @Repository](#controller-service-repository)
+    - [La anotación @Configuration](#anotacion-configuration)
     - [Ejemplo del funcionamiento de ApplicacionContext](#ejemplo-application-context)
-
-
+    - [La anotación @SpringBootApplication](#anotacion-springboot-application)
+  - [La autoconfiguración de Spring Boot](#autoconfiguracion-de-spring-boot)
+    - [¿Qué son los spring-boot-starter-*?](#spring-boot-starter)
+    - [La configuración de spring-boot-starter-web](#starter-web)
+    - [La configuración de spring-boot-starter-data-jpa](#stater-data)
+    - [La configuración de spring-boot-starter-security](#stater-security)
+  - [Aplicaciones autónomas](#aplicaciones-autonomas)
+    - [Artefactos: JAR vs WAR](#jar-vs-war)
+    - [Servidores embebidos](#servidores-embebidos)
+- [Configuración de aplicaciones](#configuracion-de-applicaciones)
+  - [Archivos properties y YAML](#properties-y-yaml)
+  - [Servidores embebidos](#servidores-embebidos)
+  - [Configuración externa y centralizada](#configuracion-externa-y-centralizada)
+  - [Perfiles dentro de Spring Boot](#perfiles-en-spring)
 
 <a id="que-es-spring-boot"></a>
 ## ¿Qué es Spring Boot?
 
+Spring Boot es una herramienta que simplifica la creación de aplicaciones Java basadas en Spring. Ofrece una configuración predeterminada y reduce la necesidad de configuración manual, permitiendo a los desarrolladores enfocarse en la lógica de negocio.
 
 <a id="que-es-la-inversion-de-control"></a>
 ### ¿Qué es la Inversión de Control (IoC)?
@@ -199,6 +213,36 @@ public class UserApiController {
 
 Así mismo, están otros estereotipos adicionales, uno de ellos es el **@RestControllerAdvice** el cuál permite la gestión de manera centralizada de las excepciones lanzadas por los controladores registrados dentro de la aplicación.
 
+<a id="anotacion-configuration"></a>
+#### La anotación @Configuration
+
+Gracias a esta anotación a nivel de clase ayuda a definir una **fuente de definiciones de beans**. Debido que, Spring identifica las clases anotadas con @Configuration y las procesa para descubrir y registrar los beans dentro del contenedor IoC.
+
+> Dependencias dentro de la definición con @Bean
+>
+> - Dentro de un método que sea marcado con @Bean, puede invocar otros métodos @Bean dentro de la misma clase @Configuration. Spring se encargará de invocar el método dependiente y proveer la instancia del bean necesario.
+> - También se pueden declarar dependencias como parámetros en los métodos marcados con @Bean. Spring buscará un bean del tipo especificado en el contexto y lo inyectará automáticamente.
+
+En el código siguiente tenemos la definición de una clase que define Beans dentro de Spring. Dentro de ella define un Bean de tipo **ProcesadorMensajes** que a su vez define una dependencia **ServicioMensajes** de tal manera que el contexto de Spring **(ApplicationContext)** buscará una instancia de está clase y se la inyectará a este Bean.
+
+```
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class AppConfig {
+    @Bean
+    public ProcesadorMensajes procesador(ServicioMensajes servicio) {
+        return new ProcesadorMensajes(servicio);
+    }
+}
+```
+> [!IMPORTANT]
+> Se ha mencionado que para la creación de Beans dentro de Spring se puede realizar a través de anotaciones y código de java.
+>
+> 1. Los beans cómo por ejemplo, @Component, @Service, etc. Son ejemplos de Beans creados por **anotaciones**
+> 2. Los beans creados dentro de una clase @Configuration son ejemplos de Beans creados por **código de java**
+
 
 <a id="ejemplo-application-context"></a>
 #### Ejemplo del funcionamiento de ApplicacionContext
@@ -294,4 +338,49 @@ public class MiRestController {
 > - MiRestController depende de ServicioA: De manera similar, el constructor de MiRestController declara una dependencia de tipo ServicioA. El ApplicationContext busca una implementación de ServicioA y encuentra ServicioAImpl. Crea una instancia de ServicioAImpl y la inyecta en el constructor de MiRestController. MiRestController interactúa con la lógica de negocio a través de la abstracción ServicioA, sin conocer los detalles de ServicioAImpl.
 
 
+<a id="anotacion-springboot-application"></a>
+#### La anotación @SpringBootApplication
 
+
+<a id="autoconfiguracion-de-spring-boot"></a>
+### La autoconfiguración de Spring Boot
+
+
+<a id="spring-boot-starter"></a>
+#### ¿Qué son los spring-boot-starter-*?
+
+<a id="starter-web"></a>
+#### La configuración de spring-boot-starter-web
+
+
+<a id="stater-data"></a>
+#### La configuración de spring-boot-starter-data-jpa
+
+<a id="stater-security"></a>
+#### La configuración de spring-boot-starter-security
+
+
+<a id="aplicaciones-autonomas"></a>
+### Aplicaciones autónomas
+
+
+<a id="jar-vs-war"></a>
+#### Artefactos: JAR vs WAR
+
+
+<a id="servidores-embebidos"></a>
+#### Servidores embebidos
+
+
+
+<a id="configuracion-de-applicaciones"></a>
+## Configuración de aplicaciones
+
+<a id="properties-y-yaml"></a>
+### Archivos properties y YAML
+
+<a id="configuracion-externa-y-centralizada"></a>
+### Configuración externa y centralizada
+
+<a id="perfiles-en-spring"></a>
+### Perfiles dentro de Spring Boot
