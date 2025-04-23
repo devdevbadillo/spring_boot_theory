@@ -21,8 +21,7 @@
     - [Artefactos: JAR vs WAR](#jar-vs-war)
     - [Servidores embebidos](#servidores-embebidos)
 - [Configuración de aplicaciones](#configuracion-de-applicaciones)
-  - [Archivos properties y YAML](#properties-y-yaml)
-  - [Servidores embebidos](#servidores-embebidos)
+  - [Archivos .properties y YAML](#properties-y-yaml)
   - [Configuración externa y centralizada](#configuracion-externa-y-centralizada)
   - [Perfiles dentro de Spring Boot](#perfiles-en-spring)
 
@@ -345,28 +344,91 @@ public class MiRestController {
 <a id="autoconfiguracion-de-spring-boot"></a>
 ### La autoconfiguración de Spring Boot
 
+La autoconfiguración es el corazón de la magia de Spring Boot. Su objetivo principal es reducir significativamente la cantidad de configuración manual que se necesita escribir para poner en marcha una aplicación Spring. 
+
+En esencia, Spring Boot **examina las dependencias** que vas añadiendo a tu proyecto (principalmente a través del archivo pom.xml o build.gradle) y, basándose en esas dependencias, **configura automáticamente** una gran cantidad de beans de Spring con valores predeterminados.
 
 <a id="spring-boot-starter"></a>
 #### ¿Qué son los spring-boot-starter-*?
 
+Los spring-boot-starter-* son un conjunto de dependencias convenientes que **agrupan todas las bibliotecas** relacionadas que típicamente se utilizan juntas **para una funcionalidad específica**. 
+
+> Beneficios
+> 
+> - Spring Boot gestiona las versiones compatibles de las dependencias transitivas. Esto reduce los problemas de compatibilidad entre diferentes bibliotecas.
+> - Incluyen la autoconfiguración necesaria para que las dependencias que agrupan funcionen de forma predeterminada con poca o ninguna configuración adicional.
+
 <a id="starter-web"></a>
 #### La configuración de spring-boot-starter-web
 
+Cuando se incluye la dependencia spring-boot-starter-web (a través del del archivo pom.xml o build.gradle) en tu proyecto, Spring Boot automáticamente configura una serie de beans esenciales para construir aplicaciones web.
+
+> ¿Qué configura este starter por defecto?
+>
+> - Spring MVC: El framework Spring MVC se configura automáticamente, incluyendo los componentes necesarios para manejar las peticiones HTTP, como **DispatcherServlet, HandlerMapping, HandlerAdapter, etc**
+> - Configura la implementación (por defecto Jackson) de soporte para serializar y deserializar objetos Java a JSON.
+> - Servidor embebido: Por defecto, Spring Boot incluye y configura un servidor Tomcat embebido. Esto significa que no necesitas desplegar tu aplicación en un servidor web externo para la ejecución de la aplicación. 
+
+> [!NOTE]
+> Un starter de vital importancia es el **spring-boot-starter-validation**
+> - Este starter de Spring Boot, configura automáticamente un validador basado en la especificación Bean Validation (normalmente Hibernate Validator)
+> - Si deseas tener más información de **Spring Web MVC**, visita mi repositorio: <a href="https://github.com/devdevbadillo/spring_web_mvc_theory">Ir</a>
 
 <a id="stater-data"></a>
 #### La configuración de spring-boot-starter-data-jpa
 
+Esté starter tiene cómo objetivo el simplificar el trabajo con bases de datos relacionales en aplicaciones Spring **utilizando la Java Persistence API (JPA)** a través de la implementación de Hibernate.
+
+> ¿Qué configura este starter por defecto?
+>
+> - Spring Boot intenta autoconfigurar una fuente de datos (DataSource) basada en la información de conexión a la base de datos que sea proporcionada en los **archivos .propiedades o YAML**.
+> - Se configura un **EntityManagerFactory**, que es el punto de entrada principal para las operaciones de persistencia en JPA. Hibernate actúa como el proveedor de persistencia subyacente.
+> - Simplifica la implementación de la capa de acceso a datos proporcionando una forma de definir interfaces de repositorio que se implementan automáticamente en tiempo de ejecución.
+
 <a id="stater-security"></a>
 #### La configuración de spring-boot-starter-security
+
+El starter de **spring-boot-starter-security** proporciona las dependencias necesarias para integrar la seguridad dentro de la aplicación de Spring
+
+> ¿Qué configura este starter por defecto?
+> 
+> - SecurityFilterChain: Spring Security utiliza una cadena de filtros (FilterChain) para interceptar y procesar las peticiones HTTP. Spring Boot autoconfigura una cadena de filtros básica que aplica la autenticación y la autorización.
+> - Al incluir este starter sin ninguna configuración adicional, Spring Boot aplica una seguridad básica basada en **"HTTP Basic Authentication"**. Esto significa que cuando intentas acceder a cualquier endpoint de tu aplicación, el navegador te pedirá un nombre de usuario y una contraseña
 
 
 <a id="aplicaciones-autonomas"></a>
 ### Aplicaciones autónomas
 
+El concepto de "aplicaciones autónomas" (souper-jar o fat jar) es una de las características distintivas dentro del framework de Spring Boot. Se refiere a la capacidad de empaquetar una aplicación Spring Boot completa, incluyendo todas sus dependencias (como el servidor web embebido, las bibliotecas de la aplicación, las dependencias de Spring, etc.), en un único archivo ejecutable. Este archivo suele ser un **JAR (Java Archive)**.
+
+> Beneficios de las aplicaciones autónomas
+>
+> - Se ha mencionado que el archivo **JAR** contiene todo lo necesario para ejecutar la aplicación, esto permite la portablilidad de la aplicación frente a diferentes entornos (diferentes sistemas operativos, proveedores de nube, etc.) siempre y cuando se tenga una Java Virtual Machine (JVM) compatible.
+> - Uno de los beneficios más importantes es la ejecución de la aplicación, pues, solo basta con ejecutar el comando: **java -jar <nombre_del_archivo>.jar**. Esto es genial, debido que facilita la integración con herramientas como Docker y Kubernetes.
+
+Ya sabemos qué es una aplicación autónoma y que beneficios nos provee está característica, pero, ¿Cómo crea dichas aplicaciones el framework de Spring Boot?
+
+> Respuesta: Spring Boot utiliza el plugin spring-boot-maven-plugin (para Maven) o org.springframework.boot (para Gradle) para empaquetar la aplicación como un JAR ejecutable. Este plugin reestructura el JAR estándar para que pueda ser ejecutado. En esencia, añade un "loader" especial que sabe cómo encontrar y cargar las clases y dependencias empaquetadas dentro del JAR.
 
 <a id="jar-vs-war"></a>
 #### Artefactos: JAR vs WAR
 
+En el mundo de las aplicaciones Java, los formatos de empaquetado más comunes para desplegar aplicaciones son JAR (Java Archive) y WAR (Web Application Archive).
+
+> JAR ( Java Archive)
+
+Originalmente, los JARs se utilizaban principalmente para empaquetar bibliotecas de código Java (APIs) para que pudieran ser incluidas como dependencias en otros proyectos Java, pero, con la llegada de Spring Boot y los servidores embebidos, el JAR se ha convertido en un formato viable para empaquetar y desplegar aplicaciones web completas. 
+
+>  WAR
+
+Un archivo WAR es un formato de empaquetado específico para aplicaciones web Java que siguen la especificación de Servlets y JavaServer Pages (JSP)
+
+Esté archivo se basa en una estructura de directorios bien definida que un servidor de aplicaciones Java EE (como Tomcat, Jetty, WildFly, etc.) espera para **poder desplegar y ejecutar la aplicación web**. Esta estructura incluye directorios como WEB-INF (que contiene la configuración de la aplicación web, clases compiladas, bibliotecas JAR privadas), META-INF (que contiene metadatos del archivo WAR), y otros directorios para recursos web (HTML, CSS, JavaScript, imágenes, JSPs, etc.).
+
+> ¿Cuándo elegir JAR o WAR con Spring Boot?
+>
+> - JAR (autónomo): Generalmente es la opción preferida para microservicios, aplicaciones que se desplegarán en contenedores (Docker), o cuando se busca simplicidad en el despliegue y no se requiere un servidor de aplicaciones Java EE específico.
+> - WAR (para servidor externo): Se elige cuando hay un requisito de desplegar la aplicación en un servidor de aplicaciones Java EE existente que es gestionado por la organización o cuando se necesitan características específicas proporcionadas por ese servidor de aplicaciones
 
 <a id="servidores-embebidos"></a>
 #### Servidores embebidos
@@ -377,7 +439,7 @@ public class MiRestController {
 ## Configuración de aplicaciones
 
 <a id="properties-y-yaml"></a>
-### Archivos properties y YAML
+### Archivos .properties y YAML
 
 <a id="configuracion-externa-y-centralizada"></a>
 ### Configuración externa y centralizada
