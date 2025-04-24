@@ -22,9 +22,14 @@
     - [Servidores embebidos](#servidores-embebidos)
 - [Configuración de aplicaciones](#configuracion-de-applicaciones)
   - [Archivos .properties y YAML](#properties-y-yaml)
-  - [Configuración externa y centralizada](#configuracion-externa-y-centralizada)
+    - [La anotación @Value](#la-anotacion-value)
+    - [La anotación @ConfigurationProperties](#la-anotacion-configuration-properties)
+    - [Propiedades de línea de comandos](#propiedades-cli)
+    - [Propiedades Java del sistema](#propiedades-java)
   - [Perfiles dentro de Spring Boot](#perfiles-en-spring)
-
+    - [Configuración de Beans de acuerdo al perfil activo](#configuracion-beans-por-perfil)
+  - [Configuración externa y centralizada](#configuracion-externa-y-centralizada)
+    
 <a id="que-es-spring-boot"></a>
 ## ¿Qué es Spring Boot?
 
@@ -433,16 +438,283 @@ Esté archivo se basa en una estructura de directorios bien definida que un serv
 <a id="servidores-embebidos"></a>
 #### Servidores embebidos
 
+Un servidor embebido es un servidor web que se **empaqueta directamente dentro de la aplicación**. En el contexto de Spring Boot, esto significa que en lugar de depender de un servidor web externo (como un Tomcat, Jetty o WildFly instalado por separado), la aplicación **incluye una instancia del servidor** web dentro de su archivo ejecutable (JAR).
+
+Spring Boot configurará automáticamente un servidor por defecto, simplemente incluyendo el starter dentro de las dependencias en el proyecto (dentro del pom.xml o build.grandle).
+
+
+| Starter                           	      |  Descripción                                          	|
+|------------------------------------------	|------------------------------------------------------		|
+| `spring-boot-starter-web`                 | El servidor configurado por **defecto** es Tomcat. Esté es  un servidor Servlet popular y maduro.		                                                                        |                         
+| `spring-boot-starter-jetty`               | Jetty es otro servidor Servlet ligero. Esté puede utilizar siempre y cuando se excluya la dependencia de **spring-boot-starter-web**                                          |
+| `spring-boot-starter-undertow` 		        | Un servidor web flexible y de alto rendimiento desarrollado por Red Hat. Esté puede utilizar siempre y cuando se excluya la dependencia de **spring-boot-starter-web**	      |
+
+
+> [!NOTE]
+> ¿Qué es un servidor Servlet?
+> Un servidor Servlet en Java es un programa que se ejecuta en un servidor web y que está diseñado para **manejar las peticiones de los clientes** (generalmente navegadores web) y generar respuestas dinámicas.
+>
+> El proceso que se lleva acabo es:
+> 1. Recibe la petición: El Servlet recibe la petición del cliente.
+> 2. Procesa la petición: El Servlet puede acceder a bases de datos, realizar cálculos, interactuar con otros servicios, etc., para preparar la información necesaria para la respuesta.
+> 3. Prepara la respuesta: El Servlet genera una respuesta dinámica, puede ser XML, JSON, imágenes, etc.
+> 4. Entrega la respuesta: El Servlet envía esta respuesta de vuelta al cliente a través del servidor web.
 
 
 <a id="configuracion-de-applicaciones"></a>
 ## Configuración de aplicaciones
 
+La configuración de aplicaciones en Spring Boot se centra en cómo **externalizar** los parámetros de tu aplicación para que puedas modificar su comportamiento sin necesidad de recompilar el código. Esto es crucial para personalizar la aplicación según las necesidades.
+
+Spring Boot ofrece varias maneras de configurar tu aplicación, siendo los archivos .properties y YAML (.yml o .yaml) los más comunes.
+
 <a id="properties-y-yaml"></a>
 ### Archivos .properties y YAML
 
-<a id="configuracion-externa-y-centralizada"></a>
-### Configuración externa y centralizada
+> Archivos .properties
+
+Son archivos de texto plano donde las propiedades se **definen en pares clave-valor**, separados por el signo igual (=).
+
+> Ejemplo ilustrativo:
+
+```
+server.port=8080
+spring.datasource.url=jdbc:h2:mem:mydb
+spring.datasource.username=sa
+spring.datasource.password=
+myapp.message=¡Hola desde properties!
+```
+
+> Archivos YAML
+
+YAML es un **formato de serialización** de datos legible por humanos. Utiliza la indentación para definir la estructura jerárquica y es más expresivo que .properties para configuraciones complejas.
+
+> Ejemplo ilustrativo:
+```
+server:
+  port: 8080
+spring:
+  datasource:
+    url: jdbc:h2:mem:mydb
+    username: sa
+    password: ""
+myapp:
+  message: ¡Hola desde YAML!
+```
+
+Spring Boot cargará automáticamente los archivos application.properties o application.yml (o application.yaml) que encuentre en el classpath de la aplicación (normalmente en la carpeta src/main/resources). 
+
+> [!NOTE]
+> Si ambos tipos de archivos están presentes, las propiedades de YAML tienen prioridad
+
+
+<a id="la-anotacion-value"></a>
+#### La anotación @Value
+
+La anotación @Value es una herramienta poderosa para **inyectar valores de configuración** (valores definidos en los archivos .properties o YAML) directamente a los Beans definidos dentro de la aplicación de Spring.
+
+> Uno de los usos principales es para obtener secretos definidos en las properties y ser usados para realizar una función que puede ser compartida en diferentes capas de la aplicación.
+
+```
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+@Component
+public class MyUtil {
+
+    @Value("${jwt.key}")
+    private String secret;
+
+    public void generateToken() {
+      /* ...Bussiness logic... */
+    }
+```
+
+> [!NOTE]
+>
+> Se puede especificar un valor por defecto usando el operador :${defaultValue}. Si la propiedad no se encuentra en los archivos de configuración, se utilizará el valor por defecto.
+> Ejemplo:
+> - @Value("${myapp.message:Hola mundo}")
+
+<a id="la-anotacion-configuration-properties"></a>
+#### La anotación @ConfigurationProperties
+
+La anotación @ConfigurationProperties ofrece una forma más estructurada y robusta de trabajar con grupos de propiedades relacionadas. En lugar de inyectar propiedades individuales con @Value, puedes **mapear un prefijo de propiedades** a un objeto Java.
+
+
+Para ejemplificar el uso de está anotación supongamos que dentro de nuestro archivo de configuración se tienen las siguientes propiedades:
+  
+```
+myapp:
+  message: Mensaje desde ConfigurationProperties
+  environment: production    
+```
+
+Notemos que el prefijo de estas configuraciones es **myapp**, entonces, en el siguiente código tenemos ese mapeo por medio del prefijo hacía una instancia de la clase MyAppProperties que tiene los atributos de **message y environment**
+que a su vez los valores de estos atributos son los definidos en el archivo de configuración.
+
+```
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
+
+@Component
+@ConfigurationProperties("myapp")
+public class MyAppProperties {
+
+    private String message;
+    private String environment;
+
+    public String getMessage() {
+        return message;
+    }
+
+    public String getEnvironment() {
+        return environment;
+    }
+}
+```
+
+<a id="propiedades-cli"></a>
+#### Propiedades de línea de comandos
+
+Spring Boot permite pasar argumentos directamente a la aplicación cuando es ejecutada desde la línea de comandos. Estos argumentos se convierten **automáticamente** en propiedades de Spring y **tienen una mayor precedencia** sobre otras fuentes de configuración (como los archivos application.properties o YAML).
+
+> Ejemplo:
+>
+> java -jar <nombre_del_ejecutable_de_la_aplicacion>.jar --server.port=3000
+
+En este caso, la propiedad server.port se establecerá en 3000, y esto **sobrescribirá** cualquier valor que pueda haber sido definido para la propiedad **server.port**.
+
+> [!NOTE]
+>
+> Estas propiedades se vuelven parte del entorno de Spring y puedes acceder a ellas de la misma manera que accedes a cualquier otra propiedad de configuración, utilizando @Value o @ConfigurationProperties.
+
+<a id="propiedades-java"></a>
+#### Propiedades Java del sistema
+
+Las propiedades Java del sistema son pares clave-valor que se establecen en la máquina virtual Java (JVM) durante su inicio. Spring Boot también integra estas propiedades en su mecanismo de configuración, aunque con una **precedencia menor** que las propiedades de línea de comandos pero **mayor** que las propiedades de los archivos de configuración.
+
+> Ejemplo: 
+> - Las propiedades del sistema se establecen utilizando la opción -D al ejecutar la JVM:
+> java -Dserver.port=8085 -jar mi-aplicacion.jar
+
+> [!NOTE]
+> 
+> Al igual que las propiedades de línea de comandos, puedes acceder a las propiedades del sistema en tus beans de Spring utilizando @Value o @ConfigurationProperties
 
 <a id="perfiles-en-spring"></a>
 ### Perfiles dentro de Spring Boot
+
+Un perfil en Spring Boot representa un **conjunto de configuraciones** que se activan bajo ciertas condiciones. Esto te permite definir diferentes beans, propiedades y configuraciones específicas para cada entorno, manteniendo el código base de la aplicación de una manera limpia y organizada.
+
+> Definición de perfiles a través de los archivos de configuración
+
+La forma más común de definir configuraciones específicas para un perfil es creando archivos de configuración con el siguiente patrón de nomenclatura: application-{profile}.properties o application-{profile}.yml (o .yaml).
+
+
+| Perfil                           	        |  Descripción                                          	|
+|------------------------------------------	|------------------------------------------------------		|
+| `application.properties`                  | Contiene la configuración por defecto que se aplica en todos los perfiles.            |                         
+| `application-dev.properties`              | Contiene configuraciones específicas para el perfil de desarrollo.                    |
+| `application-prod.yaml` 		              | Contiene configuraciones específicas para el perfil de producción.                    |
+
+Supongamos que se tienen los siguientes archivos de configuración dentro del classpath src/main/resources:
+
+```
+# application.properties:
+server.port=8080
+spring.datasource.url=jdbc:h2:mem:defaultdb
+spring.datasource.username=sa
+spring.datasource.password=
+myapp.environment=default
+
+# application-dev.properties:
+spring.datasource.url=jdbc:h2:mem:devdb
+spring.datasource.username=devuser
+spring.datasource.password=devpass
+myapp.environment=development
+
+# application-prod.properties:
+spring.datasource.url=jdbc:mysql://prod.example.com:3306/proddb
+spring.datasource.username=produser
+spring.datasource.password=prodsecret
+myapp.environment=production
+
+```
+
+Entonces, ¿Cómo puede Spring tomar las configuraciones de acuerdo al perfil activo al momento del arranque de la aplicación?
+
+Esto se hace a través del archivo de configuración por defecto (application.properties) con la declaración siguiente:
+
+```
+spring:
+  profiles:
+    active: dev
+```
+
+> [!NOTE]
+> En esté caso, la aplicación utilizará la URL, el usuario y la contraseña de la base de datos definidos en application-dev.properties, y el valor de myapp.environment será **development**
+
+
+<a id="configuracion-beans-por-perfil"></a>
+#### Configuración de Beans de acuerdo al perfil activo
+
+Dentro de Spring se pueden definir beans que solo se **instancien** cuando un determinado perfil esté activo utilizando la **anotación @Profile**.
+
+> Ejemplo de su implementación:
+
+```
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
+
+@Configuration
+public class DatabaseConfig {
+
+    @Bean
+    @Profile("dev")
+    public DataSource devDataSource() {
+        // Configuración de la fuente de datos para desarrollo (por ejemplo, H2 en memoria)
+        DriverManagerDataSource dataSource = new DriverManagerDataSource();
+        dataSource.setDriverClassName("org.h2.Driver");
+        dataSource.setUrl("jdbc:h2:mem:devdb");
+        dataSource.setUsername("devuser");
+        dataSource.setPassword("devpass");
+        return dataSource;
+    }
+
+    @Bean
+    @Profile("prod")
+    public DataSource prodDataSource() {
+        // Configuración de la fuente de datos para producción (por ejemplo, MySQL)
+        DriverManagerDataSource dataSource = new DriverManagerDataSource();
+        dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
+        dataSource.setUrl("jdbc:mysql://prod.example.com:3306/proddb");
+        dataSource.setUsername("produser");
+        dataSource.setPassword("prodsecret");
+        return dataSource;
+    }
+
+    @Bean
+    @Profile("!prod") // Bean que se instancia en todos los perfiles EXCEPTO 'prod'
+    public MyDevelopmentTool developmentTool() {
+        return new MyDevelopmentTool();
+    }
+
+    @Bean
+    @Profile({"dev", "test"}) // Bean que se instancia en los perfiles 'dev' Y 'test'
+    public DebugService debugService() {
+        return new DebugService();
+    }
+}
+```
+
+> De esté ejemplo tenemos que:
+> - El bean devDataSource solo se creará cuando el perfil dev esté activo.
+> - El bean prodDataSource solo se creará cuando el perfil prod esté activo.
+> - El bean developmentTool se creará en todos los perfiles excepto prod.
+> - El bean debugService se creará cuando los perfiles dev o test (o ambos) estén activos.
+
+
+<a id="configuracion-externa-y-centralizada"></a>
+### Configuración externa y centralizada
