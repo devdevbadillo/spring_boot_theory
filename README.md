@@ -659,7 +659,7 @@ Las propiedades Java del sistema son pares clave-valor que se establecen en la m
 
 > Ejemplo: 
 > - Las propiedades del sistema se establecen utilizando la opción -D al ejecutar la JVM:
-> java -Dserver.port=8085 -jar mi-aplicacion.jar
+> java -Dserver.port=8085 -jar <nombre_del_ejecutable_de_la_aplicacion>.jar
 
 > [!NOTE]
 > 
