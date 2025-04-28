@@ -658,7 +658,7 @@ En este caso, la propiedad server.port se establecerá en 3000, y esto **sobresc
 Las propiedades Java del sistema son pares clave-valor que se establecen en la máquina virtual Java (JVM) durante su inicio. Spring Boot también integra estas propiedades en su mecanismo de configuración, aunque con una **precedencia menor** que las propiedades de línea de comandos pero **mayor** que las propiedades de los archivos de configuración.
 
 > Ejemplo: 
-> - Las propiedades del sistema se establecen utilizando la opción -D al ejecutar la JVM:
+>   
 > java -Dserver.port=8085 -jar <nombre_del_ejecutable_de_la_aplicacion>.jar
 
 > [!NOTE]
