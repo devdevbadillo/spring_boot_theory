@@ -24,6 +24,8 @@
   - [Archivos .properties y YAML](#properties-y-yaml)
     - [La anotación @Value](#la-anotacion-value)
     - [La anotación @ConfigurationProperties](#la-anotacion-configuration-properties)
+    - [Internacionalización de la aplicación](#internacionalizacion-app)
+      - [Ejemplo de la internacionalización de un aplicación](#ejemplo-de-internacionalizacion-app)
     - [Propiedades de línea de comandos](#propiedades-cli)
     - [Propiedades Java del sistema](#propiedades-java)
   - [Perfiles dentro de Spring Boot](#perfiles-en-spring)
@@ -573,6 +575,67 @@ public class MyAppProperties {
     }
 }
 ```
+
+<a id="internacionalizacion-app"></a>
+### Internacionalización de la aplicación
+
+ La internacionalización es el proceso de diseñar y desarrollar una aplicación de software de tal manera que pueda **adaptarse a diferentes idiomas, regiones y culturas** sin necesidad de realizar cambios significativos en su código fuente.
+
+> Conceptos importantes
+>
+> - Locale: La clase **Locale** en Java representa una configuración regional que afecta al formato de fechas, números, y también a la forma en que se manejan las cadenas de texto
+> - MessageSource: Es una **interfaz de Spring** que se encarga de resolver mensajes (textos) basados en un Locale. Actúa como un **proveedor de textos traducidos**. Spring Boot **configura automáticamente un MessageSource** por defecto que busca archivos de propiedades en el classpath.
+
+Archivos de propiedades de mensajes: Estos archivos contienen las traducciones para diferentes Locales. Siguen una convención de nomenclatura:
+
+| Nomenclatura                           	  |  Descripción                                          	|
+|------------------------------------------	|------------------------------------------------------		|
+| `<nombre_del_archivo>.properties`         |  Contiene los mensajes por defecto (idioma base)                                                                                         |                         
+| `<nombre_del_archivo>_ll.properties`      |  Contiene las traducciones para un idioma específico (donde ll es el código del idioma, por ejemplo, messages_es.properties)             |
+| `<nombre_del_archivo>_ll_CC.properties` 	|  Contiene las traducciones para un idioma y país específicos (donde CC es el código del país, por ejemplo, messages_es_MX.properties).   |
+
+¿Cómo Spring Boot puede determinar qué Locale utilizar para un usuario en particular? Spring Boot proporciona la interfaz **LocaleResolver** en la que se tienen diferentes implementaciones que siguen una estrategía para diferentes contextos.
+
+| Implementación                           	  |  Descripción                                          	|
+|------------------------------------------	  |------------------------------------------------------		|
+| `AcceptHeaderLocaleResolver`                |  Es la implementación usada por **defecto**. Utiliza el encabezado Accept-Language enviado por el navegador del cliente.        |                         
+| `SessionLocaleResolver`                     |  Almacena el Locale seleccionado por el usuario en su sesión.                                                                   |
+| `CookieLocaleResolver` 	                    |  Almacena el Locale en una cookie en el navegador del cliente.                                                                  |
+| `FixedLocaleResolver` 	                    |  Fuerza el uso de un Locale específico para toda la aplicación.                                                                 |
+
+<a id="ejemplo-de-internacionalizacion-app"></a>
+#### Ejemplo de la internacionalización de un aplicación
+
+Supongamos que tenemos los siguientes archivos de propiedades de mensajes:
+
+```
+# errorMessages.yaml
+error:
+  email:
+    invalidFormat: "Invalid email"
+```
+
+
+```
+# errorMessages_es.yaml
+error:
+  email:
+    invalidFormat: "El fórmato del email es inválido"
+```
+
+Y supongamos que dentro de nuestra aplicación de Spring Boot estamos haciendo validación con Bean Validation:
+
+```
+@Email(message = "{error.email.invalidFormat}")
+private String email;
+```
+
+Entonces, sí la validación es fallida se llevarán a cabo los siguientes pasos:
+
+- 1. Se determina la implementación de **LocaleResolver** qué se utilizará para el usuario especifico.
+- 2. Una vez que el **LocaleResolver** determina el Locale (por ejemplo, es si el navegador del usuario tiene español como idioma preferido), este Locale se almacena en un ThreadLocal llamado **LocaleContextHolder**. Esto hace que el Locale actual esté disponible para el hilo de ejecución que está procesando la solicitud.
+- 3. El **MessageSource** utiliza el Locale almacenado en el **LocaleContextHolder** para buscar el mensaje en los archivos de propiedades correspondientes. Primero, intentará encontrar el mensaje en un archivo específico del idioma y país (si está presente), luego en el archivo específico del idioma y finalmente en el archivo de propiedades base.
+
 
 <a id="propiedades-cli"></a>
 #### Propiedades de línea de comandos
