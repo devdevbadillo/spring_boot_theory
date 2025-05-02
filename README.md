@@ -20,6 +20,7 @@
   - [Aplicaciones autónomas](#aplicaciones-autonomas)
     - [Artefactos: JAR vs WAR](#jar-vs-war)
     - [Servidores embebidos](#servidores-embebidos)
+        - [El servidor Tomcat dentro de Spring Boot](#servidor-tom-cat)
 - [Configuración de aplicaciones](#configuracion-de-applicaciones)
   - [Archivos .properties y YAML](#properties-y-yaml)
     - [La anotación @Value](#la-anotacion-value)
@@ -31,6 +32,20 @@
   - [Perfiles dentro de Spring Boot](#perfiles-en-spring)
     - [Configuración de Beans de acuerdo al perfil activo](#configuracion-beans-por-perfil)
   - [Configuración externa y centralizada](#configuracion-externa-y-centralizada)
+      - [¿Qué es Spring Cloud Config Server?](#spring-cloud-config-server)
+          - [Un servidor de configuración con GitHub](#servidor-con-github)
+          - [Un servidor de configuración con una base de datos](#servidor-con-basededatos)
+      - [¿Qué es Spring Cloud Config Client?](#spring-cloud-config-client)
+          - [Consumo de un servidor de configuración](#consumo-de-un-servidor-de-configuracion)
+- [Testing dentro de Spring Boot](#testing-en-spring-boot)
+    - [Patrón Given-When-Then vs Patrón Arrange-Act-Assert](#gwt-vs-aaa)
+    - [Pruebas unitarias](#pruebas-unitarias)
+        - [La anotación @DataJpaTest](#anotación-jpa-test)
+    - [Pruebas de integración](#pruebas-de-integracion)
+        - [La anotación @WebMvcTest](#anotacion-webmvc-test)
+    - [Pruebas end to end](#pruebas-e2e)
+        - [La anotación @TestRestTemplate](#anotacion-test-rest-template)
+        - [La anotación @SpringBootTest](#anotacion-spring-boot-test)
     
 <a id="que-es-spring-boot"></a>
 ## ¿Qué es Spring Boot?
@@ -462,6 +477,8 @@ Spring Boot configurará automáticamente un servidor por defecto, simplemente i
 > 3. Prepara la respuesta: El Servlet genera una respuesta dinámica, puede ser XML, JSON, imágenes, etc.
 > 4. Entrega la respuesta: El Servlet envía esta respuesta de vuelta al cliente a través del servidor web.
 
+<a id="servidor-tom-cat"></a>
+#### El servidor Tomcat dentro de Spring Boot]
 
 <a id="configuracion-de-applicaciones"></a>
 ## Configuración de aplicaciones
@@ -781,3 +798,256 @@ public class DatabaseConfig {
 
 <a id="configuracion-externa-y-centralizada"></a>
 ### Configuración externa y centralizada
+
+
+<a id="spring-cloud-config-server"></a>
+#### ¿Qué es Spring Cloud Config Server?
+
+
+<a id="servidor-con-github"></a>
+##### Un servidor de configuración con GitHub
+
+<a id="servidor-con-basededatos"></a>
+##### Un servidor de configuración con una base de datos
+
+<a id="spring-cloud-config-client"></a>
+#### ¿Qué es Spring Cloud Config Client?
+
+<a id="consumo-de-un-servidor-de-configuracion"></a>
+##### Consumo de un servidor de configuración
+
+<a id="testing-en-spring-boot"></a>
+## Testing dentro de Spring Boot
+Spring Boot automáticamente gestiona e incluye una serie de dependencias esenciales para realizar diferentes tipos de pruebas dentro del proyecto. Esto se realiza con el starter:
+
+```
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-test</artifactId>
+    <scope>test</scope>
+</dependency>
+```
+
+El spring-boot-starter-test activa automaticamente las siguientes herramientas:
+
+| Herramienta                           	                    |  Descripción                                          	|
+|-------------------------------------------------------------|------------------------------------------------------		|
+| `JUnit Jupiter`                           | Proporciona las anotaciones (@Test, @BeforeEach, @AfterEach, etc.) y las aserciones (assertEquals, assertTrue, assertNotNull, etc.) para escribir y ejecutar pruebas.   |                         
+| `Spring TestContext Framework`            | Permite cargar el contexto de la aplicación, inyectar dependencias (@Autowired), simular beans (@MockBean)                   |
+| `Spring Boot Test Annotations` 		        | Proporciona anotaciones convenientes como @SpringBootTest, @WebMvcTest, @DataJpaTest, @RestClientTest, entre otras, que simplifican la configuración de diferentes tipos de pruebas específicas  |
+| `Mockito`                                 | Permite crear objetos simulados (mocks) para aislar las unidades de código que se están probando y controlar el comportamiento de sus dependencias.                   |
+
+<a id="gwt-vs-aaa"></a>
+#### Patrón Given-When-Then vs Patrón Arrange-Act-Assert
+Aunque tienen nombres diferentes, ambos patrones persiguen el mismo objetivo: **estructurar las pruebas de una manera lógica y comprensible**.
+
+<a id="pruebas-unitarias"></a>
+#### Pruebas unitarias
+Se centran en probar componentes individuales (clases o métodos) de forma aislada, sin dependencias externas (como bases de datos o servidores web).
+
+> Patrón Arrange-Act-Assert (AAA):
+Se divide en tres fases distintas:
+
+> 1. Arrange (Preparar): En esta fase, se configura todo lo necesario para que la prueba pueda ejecutarse. Esto incluye:
+> - Crear los objetos necesarios para la prueba.
+> - Inicializar variables.
+> - Configurar el estado de los mocks (objetos simulados) o stubs (objetos controlados).
+> - Cualquier otra preparación del entorno de prueba.
+>   
+> 2. Act (Actuar): En esta fase, se ejecuta la acción o el comportamiento que se quiere probar. Esto generalmente implica:
+> - Llamar al método o la función bajo prueba.
+> - Interactuar con el sistema o componente que se está probando.
+> 
+> 3. Assert (Afirmar): En esta fase, se verifica que el resultado de la acción realizada en la fase "Act" es el esperado. Esto implica:
+> - Comparar el valor real obtenido con el valor esperado.
+> - Verificar que se hayan producido los efectos secundarios correctos (por ejemplo, que se haya llamado a un método en un mock).
+
+> Patrón Given-When-Then (GWT):
+
+Este patrón se originó en el Desarrollo Guiado por el Comportamiento **(BDD - Behavior-Driven Development)** y se centra en describir el comportamiento del sistema desde la perspectiva del usuario o de un stakeholder. 
+
+Se dive en tres fases:
+
+> 1. Given (Dado): Describe el estado inicial del sistema o el contexto en el que se va a realizar la acción. Establece las precondiciones necesarias para la prueba.
+> 2. When (Cuando): Describe la acción específica que el usuario o el sistema realiza. Es el evento o la interacción que se está probando.
+> 3. Then (Entonces): Describe el resultado esperado o el comportamiento observable después de que se ha realizado la acción en el contexto dado. Define las consecuencias o los resultados que deben verificarse.
+
+¿Cuándo utilizar cada uno? 
+
+- Usa AAA sí se quiere una estructura más directa y técnica de la prueba.
+- Usa GWT sí se quiere que las pruebas sean más descriptivas del comportamiento.
+  
+<a id="anotación-jpa-test"></a>
+##### La anotación @DataJpaTest
+
+Esta anotación se enfoca en probar la **capa de persistencia JPA** (Java Persistence API). Configura un contexto de prueba en memoria para JPA, configura un DataSource, un EntityManagerFactory y un JpaRepository.
+
+> [!IMPORTANT]
+> Por defecto, está anotación realiza un rollback de las transacciones después de cada prueba.
+
+Uno de los puntos a tomar en cuenta, es que, cómo se comento está anotación solo se centra en probar las clases que sean de un estereótipo **@Repository**, por ende soloc cargará los Beans necesarios de esa capa (un contexto limitado)
+
+> Ejemplo
+
+```
+@ActiveProfiles("test")
+@DataJpaTest
+public class MiRepositorioTest {
+    @Autowired
+    private MiRepositorio repositorio;
+
+    @Test
+    void cuandoSeBuscaPorId_entoncesSeRetornaElObjeto() {
+        MiEntidad entidad = new MiEntidad("Test");
+
+        Optional<MiEntidad> encontrada = repositorio.findById(entidad.getId());
+        assertThat(encontrada).isPresent();
+        assertThat(encontrada.get().getNombre()).isEqualTo("Test");
+    }
+}
+```
+
+<a id="pruebas-de-integracion"></a>
+#### Pruebas de integración
+Verifican la interacción entre diferentes partes de tu aplicación o con servicios externos (bases de datos, APIs). Estas pruebas aseguran que los componentes trabajen juntos correctamente. 
+
+<a id="anotacion-webmvc-test"></a>
+##### La anotación @WebMvcTest
+La anotación @WebMvcTest se enfoca en probar la capa de presentación de tu aplicación, es decir, los controladores Spring MVC. Al usar esta anotación, Spring Boot configura un entorno de prueba ligero que simula una aplicación web MVC **sin iniciar un servidor completo**.
+
+Gracias a esta anotación se carga un contexto parcial de la aplicación, carga automaticamente los siguientes componentes:
+| Componente                           	                    |  Descripción                                          	|
+|-----------------------------------------------------------|------------------------------------------------------		|
+| `Spring MVC Infrastructure`                               | Se inicializan los componentes esenciales de Spring MVC, como DispatcherServlet, HandlerMapping, etc.  |                         
+| `Controladores Específicos`                               | Se puede especificar qué controladores quieres probar. Si no se especifica ninguno, se instanciarán todos los controladores de tu aplicación (                   |
+| `Beans Relacionados` 		                                  | Se inyectan los beans necesarios para los controladores que estás probando (por ejemplo, servicios que el controlador utiliza)  |
+| `MockMvc`                                                 | Es una herramienta que permite realizar peticiones HTTP simuladas al controlador que se desee probar sin la necesidad de un servidor en ejecución.          |
+
+> Ejemplo
+```
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+
+import static org.mockito.Mockito.when;
+
+@WebMvcTest(UserController.class)
+public class UserControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockBean
+    private UserService userService;
+
+    @Test
+    public void getUserById_shouldReturnUser() throws Exception {
+        User mockUser = new User(1L, "John Doe");
+        when(userService.getUser(1L)).thenReturn(mockUser);
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/users/1")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.id").value(1))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.name").value("John Doe"));
+    }
+}
+```
+
+En este ejemplo, @WebMvcTest(UserController.class) indica que solo se quiere probar el UserController. Se inyecta MockMvc para realizar la petición GET simulada. @MockBean se utiliza para crear un mock del UserService, evitando que se instancie el bean real y permitiéndonos definir su comportamiento para la prueba.
+
+> [!IMPORTANT]
+> Bajo esta anotación solo se instancian los **beans necesarios** para los controladores probados. Otros beans de la aplicación no se cargarán en este contexto de prueba.
+
+<a id="pruebas-e2e"></a>
+##### Pruebas end to end
+Son una metodología de prueba de software diseñada para validar el flujo completo de una aplicación desde la perspectiva del usuario final. En lugar de probar componentes individuales de forma aislada (como hacen las pruebas unitarias o de integración), las pruebas E2E simulan escenarios de usuario reales, interactuando con la aplicación tal como lo haría un usuario.
+
+
+<a id="anotacion-test-rest-template"></a>
+##### La anotación @TestRestTemplate
+A diferencia de @WebMvcTest, la anotación @TestRestTemplate se utiliza para realizar pruebas de integración **end-to-end** con un servidor HTTP completo en ejecución (generalmente un Tomcat integrado que Spring Boot levanta para las pruebas). Esto te permite probar la interacción de la aplicación desde una perspectiva más realista, incluyendo la **serialización/deserialización** de objetos a través de la red.
+
+> Ventajas:
+> - Dependiendo de cómo configures tu prueba, puedes cargar toda la aplicación o un **subconjunto de los beans**.
+> - Permite probar los aspectos de seguridad de tu aplicación, como la autenticación y autorización.
+
+> Ejemplo
+```
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+public class UserIntegrationTest {
+
+    @LocalServerPort
+    private int port;
+
+    @Autowired
+    private TestRestTemplate restTemplate;
+
+    @Test
+    public void getUserById_shouldReturnUser() {
+        ResponseEntity<User> response = restTemplate.getForEntity(
+                "http://localhost:" + port + "/users/1", User.class);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(1L, response.getBody().getId());
+        assertEquals("John Doe", response.getBody().getName());
+    }
+}
+```
+
+En este ejemplo, **@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)** indica que se quiere levantar un servidor web completo en un puerto **aleatorio**. @LocalServerPort inyecta el puerto en el que se está ejecutando el servidor. Se utiliza TestRestTemplate para realizar una petición GET al endpoint /users/1 y se verifica la respuesta.
+
+
+<a id="anotacion-spring-boot-test"></a>
+##### La anotación @SpringBootTest
+Al aplicar @SpringBootTest a una clase de prueba, Spring Boot inicia un contexto de aplicación, similar a cómo lo haría al ejecutar la aplicación normalmente. Esto significa que **todos los beans** (configuraciones, servicios, etc), están disponibles para la prueba.
+
+@SpringBootTest puede configurar automáticamente un TestRestTemplate (para pruebas web tradicionales) o un WebTestClient (para pruebas reactivas con WebFlux)
+
+```
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+public class EjemploE2ETest {
+
+    @LocalServerPort
+    private int port;
+
+    @Autowired
+    private TestRestTemplate restTemplate;
+
+    @Test
+    public void testObtenerSaludo() {
+        String url = "http://localhost:" + port + "/saludo";
+        ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("¡Hola desde Spring Boot!", response.getBody());
+    }
+}
+```
